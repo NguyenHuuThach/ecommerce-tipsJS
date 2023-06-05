@@ -1,17 +1,45 @@
 "use strict";
 
-const StatusCode = {
-  OK: 200,
-  CREATED: 201,
-  ACCEPTED: 202,
-  NO_CONTENT: 204,
-  BAD_REQUEST: 400,
-  UNAUTHORIZED: 401,
-  FORBIDDEN: 403,
-  NOT_FOUND: 404,
-  INTERNAL_SERVER_ERROR: 500,
-  NOT_IMPLEMENTED: 501,
-  BAD_GATEWAY: 502,
-  SERVICE_UNAVAILABLE: 503,
-  GATEWAY_TIMEOUT: 504,
+const { StatusCodes, ReasonPhrases } = require("../utils/httpStatusCode");
+
+class SuccessResponse {
+  constructor({
+    message,
+    statusCode = StatusCodes.OK,
+    reasonStatusCode = ReasonPhrases.OK,
+    metadata = {},
+  }) {
+    this.message = !message ? reasonStatusCode : message;
+    this.status = statusCode;
+    this.metadata = metadata;
+  }
+
+  send(res, headers = {}) {
+    return res.status(this.status).json(this);
+  }
+}
+
+class OK extends SuccessResponse {
+  constructor({ message, metadata }) {
+    super({ message, metadata });
+  }
+}
+
+class CREATED extends SuccessResponse {
+  constructor({
+    options = {},
+    message,
+    statusCode = StatusCodes.CREATED,
+    reasonStatusCode = ReasonPhrases.CREATED,
+    metadata,
+  }) {
+    super({ message, statusCode, reasonStatusCode, metadata });
+    this.option = options;
+  }
+}
+
+module.exports = {
+  SuccessResponse,
+  OK,
+  CREATED,
 };

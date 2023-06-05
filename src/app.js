@@ -42,6 +42,10 @@ app.use((error, req, res, next) => {
     status: "error",
     code: statusCode,
     message: error.message || "Internal Server Error!",
+    // message:
+    //   error.message && statusCode !== 500
+    //     ? error.message
+    //     : "Internal Server Error!",
   });
 });
 

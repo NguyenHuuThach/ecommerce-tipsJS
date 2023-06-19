@@ -5,6 +5,8 @@ const { findCartById } = require("../models/repositories/cart.repo");
 const { BadRequestError, NotFoundError } = require("../core/error.response");
 const { checkProductByServer } = require("../models/repositories/product.repo");
 const { getDiscountAmount } = require("./discount.service");
+const { acquireLock, releaseLock } = require("./redis.service");
+const orderModel = require("../models/order.model");
 
 class CheckoutService {
   static async checkoutReview({ cart_id, user_id, shop_order_ids }) {
@@ -70,6 +72,55 @@ class CheckoutService {
       checkout_order,
     };
   }
+
+  static async orderByUser({
+    shop_order_ids,
+    cart_id,
+    user_id,
+    user_address = {},
+    user_payment = {},
+  }) {
+    const {} = await CheckoutService.checkoutReview({
+      cart_id,
+      user_id,
+      shop_order_ids,
+    });
+
+    const products = shop_order_ids_new.flatMap((order) => order.item_products);
+    const acquireProduct = [];
+    for (let index = 0; index < products.length; index++) {
+      const { product_id, quantity } = products[index];
+
+      const keyLock = await acquireLock(product_id, quantity, cart_id);
+      acquireProduct.push(keyLock ? true : false);
+      if (keyLock) {
+        await releaseLock(keyLock);
+      }
+    }
+
+    if (acquireProduct.includes(false)) {
+      throw new BadRequestError(
+        "Mot so san pham da duoc cap nhat, vui long quay lai gio hang..."
+      );
+    }
+
+    const newOrder = await orderModel.create({
+      order_user_id: user_id,
+      order_checkout: checkout_order,
+      order_shipping: user_address,
+      order_payment: user_payment,
+      order_products: shop_order_ids_new,
+    });
+    return newOrder;
+  }
+
+  static async getOrdersByUser() {}
+
+  static async getOneOrderByUser() {}
+
+  static async cancelOrderByUser() {}
+
+  static async updateOrderStatusByShop() {}
 }
 
 module.exports = CheckoutService;

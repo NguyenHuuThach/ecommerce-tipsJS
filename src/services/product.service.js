@@ -78,7 +78,7 @@ class ProductFactory {
     sort = "ctime",
     page = 1,
     filter = { is_published: true },
-    select = ["product_name", "product_price", "product_thumb"],
+    select = ["product_name", "product_price", "product_thumb", "product_shop"],
   }) {
     return await findAllProduct({ limit, sort, page, filter, select });
   }
